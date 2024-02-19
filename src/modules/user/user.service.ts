@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from 'src/entities/user.entity';
-import { Repository } from 'typeorm';
-import { CreateUserDto } from './dto/user.dto';
+import { DeepPartial, Repository } from 'typeorm';
+import { CreateUserDto, FilterUsersDto } from './dto/user.dto';
 
 @Injectable()
 export class UserService {
@@ -13,7 +13,23 @@ export class UserService {
 
   async createUser(createUserDto: CreateUserDto) {
     try {
-      const newUser = this.userRepository.create(createUserDto);
+
+      const partialUser: DeepPartial<User> = {
+        username: createUserDto.username,
+        email: createUserDto.email,
+        password: createUserDto.password,
+        dateOfBirth: createUserDto.dateOfBirth,
+        gender: createUserDto.gender,
+        location: createUserDto.location,
+        profilePicture: createUserDto.profilePicture,
+        bio: createUserDto.bio,
+        education_level: createUserDto.education_level,
+        dating_goal: createUserDto.dating_goal,
+        interests: createUserDto.interests,
+        languages: createUserDto.languages,
+        height: createUserDto.height,
+    };
+      const newUser = this.userRepository.create(partialUser);
       return await this.userRepository.save(newUser);
     } catch (err) {
       console.log('errr', err);
@@ -27,6 +43,43 @@ export class UserService {
     } catch (err) {
       console.log('errr', err);
       throw err;
+    }
+  }
+
+  async filterUsers(filter: FilterUsersDto): Promise<User[]> {
+    try{
+      const query = this.userRepository.createQueryBuilder('user');
+    console.log({filter})
+      if (filter.minAge) {
+          // Implement age filtering logic
+      }
+    
+      if (filter.maxAge) {
+          // Implement age filtering logic
+      }
+    
+      if (filter.location) {
+          query.where('user.location = :location', { location: filter.location });
+      }
+
+
+    
+      if (filter.interests.length>0) {
+        query.andWhere('user.interests && :interestss', { interestss: filter.interests });
+
+      }
+
+      if (filter.dating_goal) {
+        query.andWhere('user.dating_goal = :datingGoal', { datingGoal: filter.dating_goal });
+      }
+
+      if (filter?.languages?.length > 0) {
+        query.andWhere('user.languages && :languages', { languages: filter.languages });
+    }
+      return await query.getMany();
+
+    }catch(err){
+      console.log("filterUsers Err",err);
     }
   }
 }
