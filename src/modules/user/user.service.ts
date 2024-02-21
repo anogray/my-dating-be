@@ -48,12 +48,24 @@ export class UserService {
     }
   }
 
+  async findByUsernameOrEmail(usernameOrEmail: string): Promise<User> {
+    return this.userRepository.findOne({
+      where: [{ username: usernameOrEmail }, { email: usernameOrEmail }],
+    });
+  }
+
+  async checkPassword(email: string, password: string): Promise<boolean> {
+    return this.userRepository.exists({
+      where: [{ email:email, password: password }],
+    });
+  }
+
   async filterUsers(filter: FilterUsersDto): Promise<User[]> {
     try {
       const loggedInUserId = 1;
       const seenUsersKey = `seenUsers:${loggedInUserId}`;
       const seenUserIds = await this.redisService.smembers(seenUsersKey);
-      
+
       const query = this.userRepository.createQueryBuilder('user');
       console.log({ filter });
       if (filter.minAge) {

@@ -5,6 +5,7 @@ import { RedisModule } from '@nestjs-modules/ioredis';
 import { UserModule } from './modules/user/user.module';
 import { PostgresModule } from './config/database/postgres.module';
 import { ConfigModule } from '@nestjs/config';
+import { AuthModule } from './modules/auth/auth.module';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { ConfigModule } from '@nestjs/config';
       }),
     }),
     ConfigModule.forRoot({ envFilePath: ['.env'], isGlobal: true }),
+    AuthModule,
   ],
   controllers: [AppController],
   providers: [AppService],
