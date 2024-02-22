@@ -1,5 +1,5 @@
-import { IsNotEmpty, IsEmail, IsDateString, IsString, IsEnum, IsNumber } from 'class-validator';
-import { EducationLevel, DatingGoal, Interests, Languages, Gender } from 'src/common/enums/user.enum';
+import { IsNotEmpty, IsEmail, IsDateString, IsString, IsEnum, IsNumber, IsOptional } from 'class-validator';
+import { EducationLevel, DatingGoal, Interests, Languages, Gender, SeenUser } from 'src/common/enums/user.enum';
 
 export class CreateUserDto {
     @IsNotEmpty()
@@ -55,20 +55,41 @@ export class CreateUserDto {
 
 export class FilterUsersDto {
     @IsNumber()
+    @IsOptional()
     minAge?: number;
 
     @IsNumber()
+    @IsOptional()
     maxAge?: number;
 
     @IsString()
+    @IsOptional()
     location?: string;
 
+    @IsOptional()
     @IsEnum(Interests, { each: true })
     interests?: Interests[];
 
+    @IsOptional()
     @IsEnum(DatingGoal)
     dating_goal?: DatingGoal;
 
+    @IsOptional()
     @IsEnum(Languages, { each: true })
     languages?: Languages[];
+}
+
+export class SeenUserDto {
+
+    @IsString()
+    seenUserId: string;
+
+    @IsOptional()
+    @IsEnum(SeenUser)
+    status?:SeenUser
+}
+
+export class ReceviedUsersDto {
+    @IsEnum(SeenUser)
+    status:SeenUser
 }

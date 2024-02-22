@@ -3,17 +3,26 @@ import { InjectRepository } from '@nestjs/typeorm';
 import Redis from 'ioredis';
 import { InjectRedis } from '@nestjs-modules/ioredis';
 import { User } from 'src/entities/user.entity';
-import { DeepPartial, Repository } from 'typeorm';
-import { CreateUserDto, FilterUsersDto } from './dto/user.dto';
+import { DeepPartial, QueryFailedError, Repository } from 'typeorm';
+import {
+  CreateUserDto,
+  FilterUsersDto,
+  ReceviedUsersDto,
+} from './dto/user.dto';
 import { ConfigService } from '@nestjs/config';
+import { SeenUser } from 'src/entities/seen_user.entity';
+import { SeenUserDto } from './dto/user.dto';
+import { ErrorMessage } from 'src/common/constants';
 
 @Injectable()
 export class UserService {
   constructor(
     @InjectRepository(User)
     private userRepository: Repository<User>,
+    @InjectRepository(SeenUser)
+    private seenUser: Repository<SeenUser>,
     @InjectRedis() private readonly redisService: Redis,
-    private readonly configService: ConfigService
+    private readonly configService: ConfigService,
   ) {}
 
   async createUser(createUserDto: CreateUserDto) {
@@ -33,7 +42,7 @@ export class UserService {
         languages: createUserDto.languages,
         height: createUserDto.height,
       };
-      const newUser = this.userRepository.create(partialUser);
+      const newUser = this.userRepository.create(createUserDto);
       return await this.userRepository.save(newUser);
     } catch (err) {
       console.log('errr', err);
@@ -58,19 +67,34 @@ export class UserService {
 
   async checkPassword(email: string, password: string): Promise<boolean> {
     return this.userRepository.exists({
-      where: [{ email:email, password: password }],
+      where: [{ email: email, password: password }],
     });
   }
 
-  async filterUsers(filter: FilterUsersDto): Promise<User[]> {
+  async filterUsers(userId: string, filter: FilterUsersDto): Promise<User[]> {
     try {
-      console.log("checkEnv",this.configService.get<string>('JWT_SECRET'))
+      const seenUsersKey = `user:${userId}:actionUsers`;
+      let seenUserIds: any = await this.redisService.smembers(seenUsersKey);
+      if (!seenUserIds.length) {
+        seenUserIds = await this.seenUser
+          .createQueryBuilder('seen_user')
+          .select('seen_user."seenUserId"')
+          .where('seen_user."userId" = :userId', { userId })
+          .getRawMany();
+        seenUserIds = seenUserIds.map(
+          (result: { seenUserId: any }) => result.seenUserId,
+        );
+      }
+      console.log({ seenUserIds });
 
-      const loggedInUserId = 1;
-      const seenUsersKey = `seenUsers:${loggedInUserId}`;
-      const seenUserIds = await this.redisService.smembers(seenUsersKey);
+      if (seenUserIds.length) {
+        await this.redisService.sadd(`user:${userId}:actionUsers`, seenUserIds);
+      }
 
       const query = this.userRepository.createQueryBuilder('user');
+
+      query.where('user.id != :userId', { userId });
+
       console.log({ filter });
       if (filter.minAge) {
         // Implement age filtering logic
@@ -81,10 +105,12 @@ export class UserService {
       }
 
       if (filter.location) {
-        query.where('user.location = :location', { location: filter.location });
+        query.andWhere('user.location = :location', {
+          location: filter.location,
+        });
       }
 
-      if (filter.interests.length > 0) {
+      if (filter.interests?.length > 0) {
         query.andWhere('user.interests && :interestss', {
           interestss: filter.interests,
         });
@@ -100,15 +126,45 @@ export class UserService {
         query.andWhere('user.languages && :languages', {
           languages: filter.languages,
         });
-
-        if (seenUserIds.length > 0) {
-          query.andWhere('user.id NOT IN (:...seenUserIds)', { seenUserIds });
-        }
-
       }
+
+      if (seenUserIds.length > 0) {
+        query.andWhere('user.id NOT IN (:...seenUserIds)', { seenUserIds });
+      }
+
       return await query.getMany();
     } catch (err) {
       console.log('filterUsers Err', err);
+    }
+  }
+
+  async actionUser(userId: string, seenUserDto: SeenUserDto) {
+    try {
+      const seenUsersKey = `user:${userId}:actionUsers`;
+      await this.redisService.sadd(seenUsersKey, seenUserDto.seenUserId);
+      await this.seenUser.save({ userId, ...seenUserDto });
+    } catch (error) {
+      if (error?.code === '23505') {
+        throw ErrorMessage.userError.duplicateRequest;
+      }
+      console.log('actionUser errrror', error);
+      throw error;
+    }
+  }
+
+  async receivedUsers(userId: string, filter: ReceviedUsersDto) {
+    try {
+      const users = await this.seenUser
+        .createQueryBuilder('seen_user')
+        .where('seen_user.userId IS NOT NULL')
+        .andWhere('seen_user.userId =:userId', { userId })
+        .andWhere('seen_user.status = :status', { status: filter.status })
+        .leftJoinAndSelect('seen_user.user', 'user')
+        .getMany();
+
+      return users;
+    } catch (error) {
+      console.log('receivedUsers Error', error);
     }
   }
 }

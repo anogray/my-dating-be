@@ -42,6 +42,9 @@ export class ErrorMessage {
       ),
     }; // -1000000 to 99999
   
+    public static userError:any={
+      duplicateRequest: this.errorMessage('Duplicate request', 409, -99999),
+    };//-99999 to =89999
 
   }
   

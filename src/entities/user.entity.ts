@@ -1,5 +1,6 @@
 import { DatingGoal, EducationLevel, Gender, Interests, Languages } from 'src/common/enums/user.enum';
-import { Entity, Column, PrimaryGeneratedColumn } from 'typeorm';
+import { Entity, Column, PrimaryGeneratedColumn, OneToMany } from 'typeorm';
+import { SeenUser } from './seen_user.entity';
 
 
 
@@ -16,6 +17,9 @@ export class User {
 
   @Column()
   password: string;
+
+  @OneToMany(() => SeenUser, seenUser => seenUser.user)
+  seenUsers: SeenUser[];
 
   @Column({ name: 'date_of_birth', type: 'date' })
   dateOfBirth: Date;
