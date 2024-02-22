@@ -6,7 +6,8 @@ import { ConfigurationService } from "./config.service";
 @Module({
     imports: [
         ConfigModule.forRoot({
-            envFilePath: `.env`
+            envFilePath: `.env`,
+            isGlobal:true
         })
     ],
     providers: [ConfigService, ConfigurationService],

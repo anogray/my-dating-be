@@ -5,6 +5,7 @@ import { InjectRedis } from '@nestjs-modules/ioredis';
 import { User } from 'src/entities/user.entity';
 import { DeepPartial, Repository } from 'typeorm';
 import { CreateUserDto, FilterUsersDto } from './dto/user.dto';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class UserService {
@@ -12,6 +13,7 @@ export class UserService {
     @InjectRepository(User)
     private userRepository: Repository<User>,
     @InjectRedis() private readonly redisService: Redis,
+    private readonly configService: ConfigService
   ) {}
 
   async createUser(createUserDto: CreateUserDto) {
@@ -62,6 +64,8 @@ export class UserService {
 
   async filterUsers(filter: FilterUsersDto): Promise<User[]> {
     try {
+      console.log("checkEnv",this.configService.get<string>('JWT_SECRET'))
+
       const loggedInUserId = 1;
       const seenUsersKey = `seenUsers:${loggedInUserId}`;
       const seenUserIds = await this.redisService.smembers(seenUsersKey);
