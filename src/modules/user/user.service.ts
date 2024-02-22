@@ -8,6 +8,7 @@ import {
   CreateUserDto,
   FilterUsersDto,
   ReceviedUsersDto,
+  UpdateUserDto,
 } from './dto/user.dto';
 import { ConfigService } from '@nestjs/config';
 import { SeenUser } from 'src/entities/seen_user.entity';
@@ -50,9 +51,31 @@ export class UserService {
     }
   }
 
-  async getUsers() {
+  async updateUser(userId: string, updateDto: UpdateUserDto) {
     try {
-      return await this.userRepository.find();
+      const user = await this.userRepository.findOne({
+        where: { id: Number(userId) },
+      });
+
+      if (!user) {
+        throw new Error('User not found');
+      }
+      await this.userRepository.update(userId, updateDto);
+
+      return await this.userRepository.findOne({
+        where: { id: Number(userId) },
+      });
+    } catch (err) {
+      console.error('updateUser error:', err);
+      throw err;
+    }
+  }
+
+  async getUsers(userId: string) {
+    try {
+      return await this.userRepository.findOne({
+        where: { id: Number(userId) },
+      });
     } catch (err) {
       console.log('errr', err);
       throw err;
@@ -74,22 +97,32 @@ export class UserService {
   async filterUsers(userId: string, filter: FilterUsersDto): Promise<User[]> {
     try {
       const seenUsersKey = `user:${userId}:actionUsers`;
+
+      const radius = 900;
+
       let seenUserIds: any = await this.redisService.smembers(seenUsersKey);
       if (!seenUserIds.length) {
         seenUserIds = await this.seenUser
           .createQueryBuilder('seen_user')
-          .select('seen_user."seenUserId"')
+          .select('seen_user."seen_user_id"')
           .where('seen_user."userId" = :userId', { userId })
           .getRawMany();
         seenUserIds = seenUserIds.map(
-          (result: { seenUserId: any }) => result.seenUserId,
+          (result: { seen_user_id: any }) => result.seen_user_id,
         );
       }
-      console.log({ seenUserIds });
-
       if (seenUserIds.length) {
         await this.redisService.sadd(`user:${userId}:actionUsers`, seenUserIds);
       }
+
+      const { longitude, latitude } = await this.userRepository
+        .createQueryBuilder('user')
+        .select('user.longitude', 'longitude')
+        .addSelect('user.latitude', 'latitude')
+        .where('user.id = :userId', { userId })
+        .getRawOne();
+
+      console.log({ longitude, latitude });
 
       const query = this.userRepository.createQueryBuilder('user');
 
@@ -132,7 +165,16 @@ export class UserService {
         query.andWhere('user.id NOT IN (:...seenUserIds)', { seenUserIds });
       }
 
-      return await query.getMany();
+      query
+      .addSelect("earth_distance(ll_to_earth(:latitude, :longitude),ll_to_earth(user.latitude, user.longitude))",'distance')
+        .setParameter('latitude', latitude)
+        .setParameter('longitude', longitude)
+        .andWhere(
+          'earth_distance(ll_to_earth(:latitude, :longitude), ll_to_earth(user.latitude, user.longitude)) <= :radius',
+          { latitude, longitude, radius },
+        );
+
+      return await query.getRawMany();
     } catch (err) {
       console.log('filterUsers Err', err);
     }
@@ -141,7 +183,7 @@ export class UserService {
   async actionUser(userId: string, seenUserDto: SeenUserDto) {
     try {
       const seenUsersKey = `user:${userId}:actionUsers`;
-      await this.redisService.sadd(seenUsersKey, seenUserDto.seenUserId);
+      await this.redisService.sadd(seenUsersKey, seenUserDto.seen_user_id);
       await this.seenUser.save({ userId, ...seenUserDto });
     } catch (error) {
       if (error?.code === '23505') {
@@ -152,19 +194,44 @@ export class UserService {
     }
   }
 
-  async receivedUsers(userId: string, filter: ReceviedUsersDto) {
+  async sentUsers(userId: string) {
     try {
       const users = await this.seenUser
-        .createQueryBuilder('seen_user')
-        .where('seen_user.userId IS NOT NULL')
-        .andWhere('seen_user.userId =:userId', { userId })
-        .andWhere('seen_user.status = :status', { status: filter.status })
-        .leftJoinAndSelect('seen_user.user', 'user')
-        .getMany();
+      .createQueryBuilder('seen_user')
+      .where('seen_user."userId" IS NOT NULL')
+      .andWhere('seen_user."userId" =:userId', { userId })
+      .leftJoinAndSelect('seen_user.seenUser', 'user')
+      .getMany();
 
       return users;
     } catch (error) {
       console.log('receivedUsers Error', error);
+      throw error;
+    }
+  }
+
+  async receivedUsers(userId: string, filter: ReceviedUsersDto) {
+    try {
+      // const users = await this.seenUser
+      //   .createQueryBuilder('seen_user')
+      //   .where('seen_user.userId IS NOT NULL')
+      //   .andWhere('seen_user.userId =:userId', { userId })
+      //   .andWhere('seen_user.status = :status', { status: filter.status })
+      //   .leftJoinAndSelect('seen_user.user', 'user')
+      //   .getMany();
+
+      const users = await this.seenUser
+      .createQueryBuilder('seen_user')
+      .where('seen_user.userId IS NOT NULL')
+      .andWhere('seen_user.seen_user_id =:userId', { userId })
+      .andWhere('seen_user.status = :status', { status: filter.status })
+      .leftJoinAndSelect('seen_user.user', 'user')
+      .getMany();
+
+      return users;
+    } catch (error) {
+      console.log('receivedUsers Error', error);
+      throw error;
     }
   }
 }

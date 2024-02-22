@@ -53,6 +53,55 @@ export class CreateUserDto {
     height: number;
 }
 
+export class UpdateUserDto {
+    @IsOptional()
+    @IsDateString()
+    dateOfBirth?: string;
+
+    @IsOptional()
+    @IsEnum(Gender)
+    gender?: Gender;
+
+    @IsOptional()
+    @IsString()
+    location?: string;
+
+    @IsOptional()
+    @IsString()
+    profilePicture?: string;
+
+    @IsOptional()
+    @IsString()
+    bio?: string;
+
+    @IsOptional()
+    @IsEnum(EducationLevel)
+    education_level?: EducationLevel;
+
+    @IsOptional()
+    @IsEnum(DatingGoal)
+    dating_goal?: DatingGoal;
+
+    @IsOptional()
+    @IsEnum(Interests, { each: true })
+    interests?: Interests[];
+
+    @IsOptional()
+    @IsEnum(Languages, { each: true })
+    languages?: Languages[];
+
+    @IsOptional()
+    @IsNumber()
+    height?: number;
+
+    @IsOptional()
+    @IsNumber()
+    latitude?: number;
+
+    @IsOptional()
+    @IsNumber()
+    longitude?: number;
+}
 export class FilterUsersDto {
     @IsNumber()
     @IsOptional()
@@ -82,7 +131,7 @@ export class FilterUsersDto {
 export class SeenUserDto {
 
     @IsString()
-    seenUserId: string;
+    seen_user_id: string;
 
     @IsOptional()
     @IsEnum(SeenUser)

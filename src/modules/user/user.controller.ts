@@ -1,6 +1,6 @@
-import { Body, Controller, Get, Param, Post, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
 import { UserService } from './user.service';
-import { CreateUserDto, FilterUsersDto, ReceviedUsersDto, SeenUserDto } from './dto/user.dto';
+import { CreateUserDto, FilterUsersDto, ReceviedUsersDto, SeenUserDto, UpdateUserDto } from './dto/user.dto';
 import { User } from 'src/entities/user.entity';
 import { Interests } from 'src/common/enums/user.enum';
 import { AuthGuard } from 'src/guards/auth.guard';
@@ -12,9 +12,9 @@ export class UserController {
 
   @Get()
   @UseGuards(AuthGuard) 
-  async userProfile() {
+  async userProfile(@UserDecorator() user:any) {
     // return "Get Users";
-    return this.userService.getUsers();
+    return this.userService.getUsers(user.id);
   }
 
   @Post('create')
@@ -22,6 +22,13 @@ export class UserController {
   async createUser(@Body() createUserDto: CreateUserDto) {
     return this.userService.createUser(createUserDto);
   }
+
+  @Patch(':id')
+  @UseGuards(AuthGuard)
+  async updateUser(@Param('id') userId: string, @Body() updateDto: UpdateUserDto) {
+    return this.userService.updateUser(userId, updateDto);
+}
+
 
   @Post('action')
   @UseGuards(AuthGuard) 
@@ -38,11 +45,16 @@ export class UserController {
     return await this.userService.filterUsers(user.id, filter);
   }
 
+  @Get('sent')
+  @UseGuards(AuthGuard)
+  async sentUsers(@UserDecorator() user:any){
+    return await this.userService.sentUsers(user.id);
+  }
+
   @Get('received')
   @UseGuards(AuthGuard)
   async receivedUsers(@UserDecorator() user:any,@Query() filter:ReceviedUsersDto){
     console.log({user,filter})
     return await this.userService.receivedUsers(user.id, filter);
-    
   }
 }

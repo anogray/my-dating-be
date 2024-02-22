@@ -50,4 +50,10 @@ export class User {
 
   @Column({ nullable: true })
   height: number; // Assuming height is stored in centimeters
+
+  @Column({ type: 'double precision', nullable: true })
+  latitude: number;
+
+  @Column({ type: 'double precision', nullable: true })
+  longitude: number;
 }

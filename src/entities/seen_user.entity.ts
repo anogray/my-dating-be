@@ -5,11 +5,12 @@ import {
   CreateDateColumn,
   Index,
   ManyToOne,
+  JoinColumn,
 } from 'typeorm';
 import { User } from './user.entity';
 
 @Entity()
-@Index(['userId', 'seenUserId'], { unique: true })
+@Index(['userId', 'seen_user_id'], { unique: true })
 export class SeenUser {
   @PrimaryGeneratedColumn()
   id: number;
@@ -20,12 +21,16 @@ export class SeenUser {
   @Column()
   userId: string;
 
-  @Column()
-  seenUserId: string;
+  @ManyToOne(() => User)
+  @JoinColumn({ name: 'seen_user_id' })
+  seenUser: User;
+
+  @Column({ name: 'seen_user_id' })
+  seen_user_id: string;
 
   @Column({nullable:true})
   status: string;
-
+  
   @CreateDateColumn({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   createdDate: Date;
 }
