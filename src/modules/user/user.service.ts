@@ -51,12 +51,12 @@ export class UserService {
     }
   }
 
-  async updateUser(userId: string, updateDto: UpdateUserDto) {
+  async updateUser(userId: string, updateDto: UpdateUserDto, files: { images?: Express.Multer.File[] },) {
     try {
+      console.log("updateUser",files)
       const user = await this.userRepository.findOne({
         where: { id: Number(userId) },
       });
-
       if (!user) {
         throw new Error('User not found');
       }

@@ -1,4 +1,5 @@
-import { IsNotEmpty, IsEmail, IsDateString, IsString, IsEnum, IsNumber, IsOptional } from 'class-validator';
+import { Transform } from 'class-transformer';
+import { IsNotEmpty, IsEmail, IsDateString, IsString, IsEnum, IsNumber, IsOptional, IsArray } from 'class-validator';
 import { EducationLevel, DatingGoal, Interests, Languages, Gender, SeenUser } from 'src/common/enums/user.enum';
 
 export class CreateUserDto {
@@ -70,6 +71,11 @@ export class UpdateUserDto {
     @IsString()
     profilePicture?: string;
 
+    // @IsOptional()
+    // @IsString()
+    // @IsArray({each:true})
+    // images?: string[];
+
     @IsOptional()
     @IsString()
     bio?: string;
@@ -95,10 +101,12 @@ export class UpdateUserDto {
     height?: number;
 
     @IsOptional()
+    @Transform(({ value }) => parseFloat(value))
     @IsNumber()
     latitude?: number;
 
     @IsOptional()
+    @Transform(({ value }) => parseFloat(value))
     @IsNumber()
     longitude?: number;
 }

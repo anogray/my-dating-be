@@ -1,10 +1,12 @@
-import { Body, Controller, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post, Query, UploadedFiles, UseGuards, UseInterceptors } from '@nestjs/common';
 import { UserService } from './user.service';
 import { CreateUserDto, FilterUsersDto, ReceviedUsersDto, SeenUserDto, UpdateUserDto } from './dto/user.dto';
 import { User } from 'src/entities/user.entity';
 import { Interests } from 'src/common/enums/user.enum';
 import { AuthGuard } from 'src/guards/auth.guard';
 import { UserDecorator } from 'src/decorators/user.decorator';
+import { UserMediaImageValidation } from 'src/common/pipes/user.media.validation.pipe';
+import { FileFieldsInterceptor } from '@nestjs/platform-express';
 
 @Controller('users')
 export class UserController {
@@ -22,11 +24,18 @@ export class UserController {
   async createUser(@Body() createUserDto: CreateUserDto) {
     return this.userService.createUser(createUserDto);
   }
-
+  
   @Patch(':id')
   @UseGuards(AuthGuard)
-  async updateUser(@Param('id') userId: string, @Body() updateDto: UpdateUserDto) {
-    return this.userService.updateUser(userId, updateDto);
+  @UseInterceptors(
+    FileFieldsInterceptor([
+      { name: 'images', maxCount: 4 },
+    ]),
+  )
+  async updateUser(@Param('id') userId: string,@Body() updateDto: UpdateUserDto, @UploadedFiles(new UserMediaImageValidation()) files: {
+    images?: Express.Multer.File[];
+  } ) {
+    return this.userService.updateUser(userId, updateDto, files);
 }
 
 

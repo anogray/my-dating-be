@@ -64,3 +64,9 @@ export enum SeenUser{
   REJECTED='REJECTED',
   REQUESTED='REQUESTED'
 }
+
+export enum userImages{
+  'image/png',
+  'image/jpeg',
+  'image/gif'
+}

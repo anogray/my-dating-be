@@ -1,8 +1,12 @@
-import { DatingGoal, EducationLevel, Gender, Interests, Languages } from 'src/common/enums/user.enum';
+import {
+  DatingGoal,
+  EducationLevel,
+  Gender,
+  Interests,
+  Languages,
+} from 'src/common/enums/user.enum';
 import { Entity, Column, PrimaryGeneratedColumn, OneToMany } from 'typeorm';
 import { SeenUser } from './seen_user.entity';
-
-
 
 @Entity()
 export class User {
@@ -18,13 +22,13 @@ export class User {
   @Column()
   password: string;
 
-  @OneToMany(() => SeenUser, seenUser => seenUser.user)
+  @OneToMany(() => SeenUser, (seenUser) => seenUser.user)
   seenUsers: SeenUser[];
 
   @Column({ name: 'date_of_birth', type: 'date' })
   dateOfBirth: Date;
 
-  @Column({type:"enum", enum:Gender})
+  @Column({ type: 'enum', enum: Gender })
   gender: Gender;
 
   @Column()
@@ -33,19 +37,22 @@ export class User {
   @Column({ name: 'profile_picture', nullable: true })
   profilePicture: string;
 
+  @Column('varchar', { array: true , default:[]})
+  images: string[];
+
   @Column({ type: 'text', nullable: true })
   bio: string;
 
   @Column({ type: 'varchar', nullable: true })
   education_level: string;
-  
-  @Column({ type: 'varchar', default:DatingGoal.STILL_FIGURING_OUT })
+
+  @Column({ type: 'varchar', default: DatingGoal.STILL_FIGURING_OUT })
   dating_goal: string;
-  
-  @Column("text", {array: true})
+
+  @Column('text', { array: true })
   interests: string[];
 
-  @Column("text", {array: true})
+  @Column('text', { array: true })
   languages: string[];
 
   @Column({ nullable: true })
