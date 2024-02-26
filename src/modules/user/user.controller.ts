@@ -12,6 +12,14 @@ import { FileFieldsInterceptor } from '@nestjs/platform-express';
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
+
+  @Get("test")
+  async getData() {
+    // return "Get Users";
+    return "gotData";
+  }
+
+
   @Get()
   @UseGuards(AuthGuard) 
   async userProfile(@UserDecorator() user:any) {

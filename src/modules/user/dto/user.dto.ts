@@ -1,6 +1,6 @@
 import { Transform } from 'class-transformer';
 import { IsNotEmpty, IsEmail, IsDateString, IsString, IsEnum, IsNumber, IsOptional, IsArray } from 'class-validator';
-import { EducationLevel, DatingGoal, Interests, Languages, Gender, SeenUser } from 'src/common/enums/user.enum';
+import { EducationLevel, DatingGoal, Interests, Languages, Gender, REQUESTUSER } from 'src/common/enums/user.enum';
 
 export class CreateUserDto {
     @IsNotEmpty()
@@ -142,11 +142,11 @@ export class SeenUserDto {
     seen_user_id: string;
 
     @IsOptional()
-    @IsEnum(SeenUser)
-    status?:SeenUser
+    @IsEnum(REQUESTUSER)
+    status?:REQUESTUSER
 }
 
 export class ReceviedUsersDto {
-    @IsEnum(SeenUser)
-    status:SeenUser
+    @IsEnum(REQUESTUSER)
+    status:REQUESTUSER
 }

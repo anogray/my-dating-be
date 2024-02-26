@@ -44,6 +44,7 @@ export class ErrorMessage {
   
     public static userError:any={
       duplicateRequest: this.errorMessage('Duplicate request', 409, -99999),
+      invalidCredentials:this.errorMessage('Invalid credentials',400,-99998)
     };//-99999 to =89999
 
   }

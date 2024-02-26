@@ -6,6 +6,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { AuthCredentialsDto } from './auth.dto';
 import { User } from 'src/entities/user.entity';
 import { UserService } from '../user/user.service'; // Import UserService
+import { ErrorMessage } from 'src/common/constants';
 
 @Injectable()
 export class AuthService {
@@ -28,7 +29,7 @@ export class AuthService {
         ? await this.userService.checkPassword(user.email, password)
         : false;
       if (!isUserValidated) {
-        throw new UnauthorizedException('Invalid credentials');
+        throw ErrorMessage.userError.invalidCredentials;
       }
 
       const payload = { username: user.username, id: user.id };
@@ -40,6 +41,7 @@ export class AuthService {
       return true;
     } catch (err) {
       console.log({ err });
+      throw err;
     }
   }
 }

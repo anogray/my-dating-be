@@ -14,6 +14,8 @@ import { ConfigService } from '@nestjs/config';
 import { SeenUser } from 'src/entities/seen_user.entity';
 import { SeenUserDto } from './dto/user.dto';
 import { ErrorMessage } from 'src/common/constants';
+import { FileUploadService } from 'src/external/cloudinary.external';
+import { REQUESTUSER } from 'src/common/enums/user.enum';
 
 @Injectable()
 export class UserService {
@@ -24,6 +26,7 @@ export class UserService {
     private seenUser: Repository<SeenUser>,
     @InjectRedis() private readonly redisService: Redis,
     private readonly configService: ConfigService,
+    private fileUploadService: FileUploadService,
   ) {}
 
   async createUser(createUserDto: CreateUserDto) {
@@ -51,16 +54,30 @@ export class UserService {
     }
   }
 
-  async updateUser(userId: string, updateDto: UpdateUserDto, files: { images?: Express.Multer.File[] },) {
+  async updateUser(
+    userId: string,
+    updateDto: UpdateUserDto,
+    files: { images?: Express.Multer.File[] },
+  ) {
     try {
-      console.log("updateUser",files)
+      console.log('updateUser', files);
       const user = await this.userRepository.findOne({
         where: { id: Number(userId) },
       });
       if (!user) {
         throw new Error('User not found');
       }
-      await this.userRepository.update(userId, updateDto);
+      let responseUploadedUrls = null;
+      if (files?.images) {
+        responseUploadedUrls = await this.fileUploadService.uploadImage(
+          files?.images,
+        );
+      }
+      console.log('respneUrl', responseUploadedUrls);
+      await this.userRepository.update(userId, {
+        ...updateDto,
+        images: responseUploadedUrls,
+      });
 
       return await this.userRepository.findOne({
         where: { id: Number(userId) },
@@ -94,7 +111,11 @@ export class UserService {
     });
   }
 
-  async filterUsers(userId: string, filter: FilterUsersDto): Promise<User[]> {
+  async filterUsers(
+    userId: string,
+    filter: FilterUsersDto,
+    limit: number = 20,
+  ): Promise<User[]> {
     try {
       const seenUsersKey = `user:${userId}:actionUsers`;
 
@@ -115,14 +136,19 @@ export class UserService {
         await this.redisService.sadd(`user:${userId}:actionUsers`, seenUserIds);
       }
 
+
+      const getSeenRequestUser = await this.seenUser.findOne({where:{status:REQUESTUSER.REQUESTED},relations: ['seenUser'] , select:['seenUser']})
+
+      if(getSeenRequestUser){
+        limit = 19
+      }
+      
       const { longitude, latitude } = await this.userRepository
         .createQueryBuilder('user')
         .select('user.longitude', 'longitude')
         .addSelect('user.latitude', 'latitude')
         .where('user.id = :userId', { userId })
         .getRawOne();
-
-      console.log({ longitude, latitude });
 
       const query = this.userRepository.createQueryBuilder('user');
 
@@ -166,15 +192,28 @@ export class UserService {
       }
 
       query
-      .addSelect("earth_distance(ll_to_earth(:latitude, :longitude),ll_to_earth(user.latitude, user.longitude))",'distance')
+        .addSelect(
+          'earth_distance(ll_to_earth(:latitude, :longitude),ll_to_earth(user.latitude, user.longitude))',
+          'distance',
+        )
         .setParameter('latitude', latitude)
         .setParameter('longitude', longitude)
         .andWhere(
           'earth_distance(ll_to_earth(:latitude, :longitude), ll_to_earth(user.latitude, user.longitude)) <= :radius',
           { latitude, longitude, radius },
-        );
+        )
+        .limit(limit);
 
-      return await query.getRawMany();
+        const getFilterdUsers = await query.getRawMany();
+
+        if(getSeenRequestUser){
+          const randomIndex = Math.floor(Math.random() * (getFilterdUsers.length + 1));
+          getFilterdUsers.splice(randomIndex, 0, getSeenRequestUser.seenUser);
+        }
+
+        // const usersRandomized = MathgetFilterdUsers.length
+
+      return getFilterdUsers;
     } catch (err) {
       console.log('filterUsers Err', err);
     }
@@ -197,11 +236,11 @@ export class UserService {
   async sentUsers(userId: string) {
     try {
       const users = await this.seenUser
-      .createQueryBuilder('seen_user')
-      .where('seen_user."userId" IS NOT NULL')
-      .andWhere('seen_user."userId" =:userId', { userId })
-      .leftJoinAndSelect('seen_user.seenUser', 'user')
-      .getMany();
+        .createQueryBuilder('seen_user')
+        .where('seen_user."userId" IS NOT NULL')
+        .andWhere('seen_user."userId" =:userId', { userId })
+        .leftJoinAndSelect('seen_user.seenUser', 'user')
+        .getMany();
 
       return users;
     } catch (error) {
@@ -210,7 +249,11 @@ export class UserService {
     }
   }
 
-  async receivedUsers(userId: string, filter: ReceviedUsersDto) {
+  async receivedUsers(
+    userId: string,
+    filter: ReceviedUsersDto,
+    limit: number = 20,
+  ) {
     try {
       // const users = await this.seenUser
       //   .createQueryBuilder('seen_user')
@@ -221,12 +264,13 @@ export class UserService {
       //   .getMany();
 
       const users = await this.seenUser
-      .createQueryBuilder('seen_user')
-      .where('seen_user.userId IS NOT NULL')
-      .andWhere('seen_user.seen_user_id =:userId', { userId })
-      .andWhere('seen_user.status = :status', { status: filter.status })
-      .leftJoinAndSelect('seen_user.user', 'user')
-      .getMany();
+        .createQueryBuilder('seen_user')
+        .where('seen_user.userId IS NOT NULL')
+        .andWhere('seen_user.seen_user_id =:userId', { userId })
+        .andWhere('seen_user.status = :status', { status: filter.status })
+        .leftJoinAndSelect('seen_user.user', 'user')
+        .limit(limit)
+        .getMany();
 
       return users;
     } catch (error) {

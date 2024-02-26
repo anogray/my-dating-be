@@ -59,10 +59,11 @@ export enum EducationLevel {
   OTHER = 'Other',
 }
 
-export enum SeenUser{
-  ACCEPTED='ACCEPTED',
+export enum REQUESTUSER{
+  MATCHED='MATCHED',
   REJECTED='REJECTED',
-  REQUESTED='REQUESTED'
+  REQUESTED='REQUESTED',
+  BLOCKED='BLOCKED'
 }
 
 export enum userImages{
