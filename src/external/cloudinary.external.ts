@@ -10,17 +10,6 @@ import * as streamifier from 'streamifier';
 import { v4 as uuidv4 } from 'uuid';
 import { userImages } from '../common/enums/user.enum';
 
-// cloudinary.config({
-//     cloud_name: process.env.CLOUDINARY_CLOUD,
-//     api_key: process.env.CLOUDINARY_API_KEY,
-//     api_secret: process.env.CLOUDINARY_API_SECRET
-//   });
-//   cloudinary.config({
-//     cloud_name: "doyezmfiw",
-//     api_key: "328476417741913",
-//     api_secret: "8Jmr4TJDM5C1aYX9fQY6OKNPgK0"
-//   });
-
 export class FileUploadService {
   constructor(private configService: ConfigurationService) {
     cloudinary.config({

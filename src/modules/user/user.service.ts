@@ -136,13 +136,18 @@ export class UserService {
         await this.redisService.sadd(`user:${userId}:actionUsers`, seenUserIds);
       }
 
+      // const getSeenRequestUser = await this.seenUser.findOne({where:{status:REQUESTUSER.REQUESTED},relations: ['seenUser'] , select:['seenUser']})
 
-      const getSeenRequestUser = await this.seenUser.findOne({where:{status:REQUESTUSER.REQUESTED},relations: ['seenUser'] , select:['seenUser']})
+      const getSeenRequestUser = await this.seenUser.findOne({
+        where: { status: REQUESTUSER.REQUESTED },
+        relations: ['seenUser'],
+        select: ['seenUser'],
+      });
 
-      if(getSeenRequestUser){
-        limit = 19
+      if (getSeenRequestUser) {
+        limit = 19;
       }
-      
+
       const { longitude, latitude } = await this.userRepository
         .createQueryBuilder('user')
         .select('user.longitude', 'longitude')
@@ -202,16 +207,34 @@ export class UserService {
           'earth_distance(ll_to_earth(:latitude, :longitude), ll_to_earth(user.latitude, user.longitude)) <= :radius',
           { latitude, longitude, radius },
         )
+        .addSelect('user.id', 'id')
+        .addSelect('user.username', 'username')
+        .addSelect('user.email', 'email')
+        .addSelect('user.dateOfBirth', 'dateOfBirth')
+        .addSelect('user.gender', 'gender')
+        .addSelect('user.location', 'location')
+        .addSelect('user.profilePicture', 'profilePicture')
+        .addSelect('user.images', 'images')
+        .addSelect('user.bio', 'bio')
+        .addSelect('user.education_level', 'education_level')
+        .addSelect('user.dating_goal', 'dating_goal')
+        .addSelect('user.interests', 'interests')
+        .addSelect('user.languages', 'languages')
+        .addSelect('user.height', 'height')
+        .addSelect('user.latitude', 'latitude')
+        .addSelect('user.longitude', 'longitude')
         .limit(limit);
 
-        const getFilterdUsers = await query.getRawMany();
+      const getFilterdUsers = await query.getRawMany();
 
-        if(getSeenRequestUser){
-          const randomIndex = Math.floor(Math.random() * (getFilterdUsers.length + 1));
-          getFilterdUsers.splice(randomIndex, 0, getSeenRequestUser.seenUser);
-        }
+      if (getSeenRequestUser) {
+        const randomIndex = Math.floor(
+          Math.random() * (getFilterdUsers.length + 1),
+        );
+        getFilterdUsers.splice(randomIndex, 0, getSeenRequestUser.seenUser);
+      }
 
-        // const usersRandomized = MathgetFilterdUsers.length
+      // const usersRandomized = MathgetFilterdUsers.length
 
       return getFilterdUsers;
     } catch (err) {
@@ -235,12 +258,52 @@ export class UserService {
 
   async sentUsers(userId: string) {
     try {
+      // const users = await this.seenUser
+      //   .createQueryBuilder('seen_user')
+      //   .where('seen_user."userId" IS NOT NULL')
+      //   .andWhere('seen_user."userId" =:userId', { userId })
+      //   .leftJoinAndSelect('seen_user.seenUser', 'user')
+      //   .getMany();
+
+      const { longitude, latitude } = await this.userRepository
+      .createQueryBuilder('user')
+      .select('user.longitude', 'longitude')
+      .addSelect('user.latitude', 'latitude')
+      .where('user.id = :userId', { userId })
+      .getRawOne();
+
       const users = await this.seenUser
-        .createQueryBuilder('seen_user')
-        .where('seen_user."userId" IS NOT NULL')
-        .andWhere('seen_user."userId" =:userId', { userId })
-        .leftJoinAndSelect('seen_user.seenUser', 'user')
-        .getMany();
+      .createQueryBuilder('seen_user')
+      .where('seen_user."userId" IS NOT NULL')
+      .andWhere('seen_user."userId" = :userId', { userId })
+      .select([
+        'user.id as id',
+        'user.username as username',
+        'user.email as email',
+        'user.dateOfBirth as dateOfBirth',
+        'user.gender as gender',
+        'user.location as location',
+        'user.profilePicture as profilePicture',
+        'user.images as images',
+        'user.bio as bio',
+        'user.education_level as education_level',
+        'user.dating_goal as dating_goal',
+        'user.interests as interests',
+        'user.languages as languages',
+        'user.height as height',
+        'user.latitude as latitude',
+        'user.longitude as longitude',
+      ])
+      .leftJoin('seen_user.seenUser', 'user')
+      .addSelect(
+        'earth_distance(ll_to_earth(:latitude, :longitude),ll_to_earth(user.latitude, user.longitude))',
+        'distance',
+      )
+      .setParameter('latitude', latitude)
+      .setParameter('longitude', longitude)
+      .getRawMany();
+
+  
 
       return users;
     } catch (error) {

@@ -59,6 +59,7 @@ export class UserController {
     if (filter.interests && typeof filter.interests === 'string') {
       filter.interests = (filter.interests as any).split(',') as Interests[];
     }
+    console.log(user)
     return await this.userService.filterUsers(user.id, filter);
   }
 
