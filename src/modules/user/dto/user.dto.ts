@@ -55,9 +55,14 @@ export class CreateUserDto {
 }
 
 export class UpdateUserDto {
+    // @IsOptional()
+    // @IsDateString()
+    // dateOfBirth?: string;
+
     @IsOptional()
-    @IsDateString()
-    dateOfBirth?: string;
+    @IsString()
+    
+    age?: number;
 
     @IsOptional()
     @IsEnum(Gender)

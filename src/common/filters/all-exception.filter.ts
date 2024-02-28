@@ -25,7 +25,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
     const tag = request.url;
     if (!err) err = ErrorMessage.systemError.oopsSomethingWentWrong;
     if (err.query) err = ErrorMessage.systemError.oopsSomethingWentWrong;
-    
+    console.log("checkCatch",err)
     const errorObj = err;
     void response.status(err?.httpStatus || 400).send(errorObj);
     this.logger.error(err, { tag, data: err });

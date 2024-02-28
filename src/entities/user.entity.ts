@@ -5,7 +5,7 @@ import {
   Interests,
   Languages,
 } from 'src/common/enums/user.enum';
-import { Entity, Column, PrimaryGeneratedColumn, OneToMany } from 'typeorm';
+import { Entity, Column, PrimaryGeneratedColumn, OneToMany, NumericType } from 'typeorm';
 import { SeenUser } from './seen_user.entity';
 
 @Entity()
@@ -27,6 +27,9 @@ export class User {
 
   @Column({ name: 'date_of_birth', type: 'date' })
   dateOfBirth: Date;
+
+  @Column({ nullable: true })
+  age: number;
 
   @Column({ type: 'enum', enum: Gender })
   gender: Gender;

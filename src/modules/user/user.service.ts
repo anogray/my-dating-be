@@ -60,7 +60,6 @@ export class UserService {
     files: { images?: Express.Multer.File[] },
   ) {
     try {
-      console.log('updateUser', files);
       const user = await this.userRepository.findOne({
         where: { id: Number(userId) },
       });
@@ -74,10 +73,20 @@ export class UserService {
         );
       }
       console.log('respneUrl', responseUploadedUrls);
-      await this.userRepository.update(userId, {
-        ...updateDto,
-        images: responseUploadedUrls,
-      });
+
+      const updatedUserData: DeepPartial<User> = { ...updateDto };
+
+      if (responseUploadedUrls && responseUploadedUrls.length > 0) {
+        updatedUserData.images = user.images ? [...user.images, ...responseUploadedUrls] : responseUploadedUrls;
+      }
+
+      // await this.userRepository.update(userId, {
+      //   ...updateDto,
+      //   images: responseUploadedUrls,
+      // });
+
+      await this.userRepository.update(userId, updatedUserData);
+
 
       return await this.userRepository.findOne({
         where: { id: Number(userId) },
