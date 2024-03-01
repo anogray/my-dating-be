@@ -60,11 +60,21 @@ export class UserService {
     files: { images?: Express.Multer.File[] },
   ) {
     try {
+      const allFieldsUndefined = Object.values(updateDto).every(
+        (value) => value === undefined,
+      );
+      if (allFieldsUndefined && !files?.images) {
+        throw ErrorMessage.userError.updateUserDtoEmpty;
+      }
+
       const user = await this.userRepository.findOne({
         where: { id: Number(userId) },
       });
       if (!user) {
-        throw new Error('User not found');
+        throw ErrorMessage.userError.userNotFound;
+      }
+      if(user.images?.length>5){
+        throw ErrorMessage.userError.numberImagesLimit;
       }
       let responseUploadedUrls = null;
       if (files?.images) {
@@ -72,13 +82,13 @@ export class UserService {
           files?.images,
         );
       }
-      console.log('respneUrl', responseUploadedUrls);
 
       const updatedUserData: DeepPartial<User> = { ...updateDto };
 
       if (responseUploadedUrls && responseUploadedUrls.length > 0) {
         updatedUserData.images = user.images ? [...user.images, ...responseUploadedUrls] : responseUploadedUrls;
       }
+      console.log('respneUrl', responseUploadedUrls, updatedUserData);
 
       // await this.userRepository.update(userId, {
       //   ...updateDto,
@@ -86,7 +96,6 @@ export class UserService {
       // });
 
       await this.userRepository.update(userId, updatedUserData);
-
 
       return await this.userRepository.findOne({
         where: { id: Number(userId) },
@@ -96,6 +105,30 @@ export class UserService {
       throw err;
     }
   }
+
+  async removeProfileImage(userId:string,image_url:string){
+    try{
+      if(!image_url){
+        throw ErrorMessage.userError.removeProfileImageInvalid;
+      }
+
+      const result = await this.userRepository
+      .createQueryBuilder()
+      .update(User)
+      .set({ images: () => `array_remove(images, '${image_url}')` })
+      .where("id = :userId", { userId })
+      .andWhere(`'${image_url}' = ANY(images)`)
+      .execute();
+
+    if (result.affected === 0) {
+      throw ErrorMessage.userError.imagenotFound;
+    }
+
+    }catch(err){
+      throw err;
+    }
+  }
+
 
   async getUsers(userId: string) {
     try {
@@ -275,44 +308,42 @@ export class UserService {
       //   .getMany();
 
       const { longitude, latitude } = await this.userRepository
-      .createQueryBuilder('user')
-      .select('user.longitude', 'longitude')
-      .addSelect('user.latitude', 'latitude')
-      .where('user.id = :userId', { userId })
-      .getRawOne();
+        .createQueryBuilder('user')
+        .select('user.longitude', 'longitude')
+        .addSelect('user.latitude', 'latitude')
+        .where('user.id = :userId', { userId })
+        .getRawOne();
 
       const users = await this.seenUser
-      .createQueryBuilder('seen_user')
-      .where('seen_user."userId" IS NOT NULL')
-      .andWhere('seen_user."userId" = :userId', { userId })
-      .select([
-        'user.id as id',
-        'user.username as username',
-        'user.email as email',
-        'user.dateOfBirth as dateOfBirth',
-        'user.gender as gender',
-        'user.location as location',
-        'user.profilePicture as profilePicture',
-        'user.images as images',
-        'user.bio as bio',
-        'user.education_level as education_level',
-        'user.dating_goal as dating_goal',
-        'user.interests as interests',
-        'user.languages as languages',
-        'user.height as height',
-        'user.latitude as latitude',
-        'user.longitude as longitude',
-      ])
-      .leftJoin('seen_user.seenUser', 'user')
-      .addSelect(
-        'earth_distance(ll_to_earth(:latitude, :longitude),ll_to_earth(user.latitude, user.longitude))',
-        'distance',
-      )
-      .setParameter('latitude', latitude)
-      .setParameter('longitude', longitude)
-      .getRawMany();
-
-  
+        .createQueryBuilder('seen_user')
+        .where('seen_user."userId" IS NOT NULL')
+        .andWhere('seen_user."userId" = :userId', { userId })
+        .select([
+          'user.id as id',
+          'user.username as username',
+          'user.email as email',
+          'user.dateOfBirth as dateOfBirth',
+          'user.gender as gender',
+          'user.location as location',
+          'user.profilePicture as profilePicture',
+          'user.images as images',
+          'user.bio as bio',
+          'user.education_level as education_level',
+          'user.dating_goal as dating_goal',
+          'user.interests as interests',
+          'user.languages as languages',
+          'user.height as height',
+          'user.latitude as latitude',
+          'user.longitude as longitude',
+        ])
+        .leftJoin('seen_user.seenUser', 'user')
+        .addSelect(
+          'earth_distance(ll_to_earth(:latitude, :longitude),ll_to_earth(user.latitude, user.longitude))',
+          'distance',
+        )
+        .setParameter('latitude', latitude)
+        .setParameter('longitude', longitude)
+        .getRawMany();
 
       return users;
     } catch (error) {

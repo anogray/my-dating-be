@@ -115,6 +115,12 @@ export class UpdateUserDto {
     @IsNumber()
     longitude?: number;
 }
+
+export class RemoveImageDto{
+    @IsNotEmpty()
+    @IsString()
+    image:string
+}
 export class FilterUsersDto {
     @IsNumber()
     @IsOptional()

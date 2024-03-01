@@ -42,21 +42,22 @@ export enum Languages {
 }
 
 export enum DatingGoal {
-  LONG_TERM_PARTNER = 'LONG_TERM_PARTNER',
-  SHORT_TERM_RELATIONSHIP = 'SHORT_TERM_RELATIONSHIP',
-  NEW_FRIENDS = 'NEW_FRIENDS',
-  STILL_FIGURING_OUT = 'STILL_FIGURING_OUT',
+  'Long Term Partner' = 'Long Term Partner',
+  'Short Term Relationship' = 'Short Term Relationship',
+  'New Friends' = 'New Friends',
+  'Still Figuring Out' = 'Still Figuring Out',
 }
 
+
 export enum EducationLevel {
-  NONE = 'None',
-  HIGH_SCHOOL = 'High School',
-  SOME_COLLEGE = 'Some College',
-  ASSOCIATE_DEGREE = 'Associate Degree',
-  BACHELOR_DEGREE = "Bachelor's Degree",
-  MASTER_DEGREE = "Master's Degree",
-  DOCTORATE_DEGREE = 'Doctorate Degree',
-  OTHER = 'Other',
+  'None' = 'None',
+  'High School' = 'High School',
+  'Some College' = 'Some College',
+  'Associate Degree' = 'Associate Degree',
+  "Bachelor's Degree" = "Bachelor's Degree",
+  "Master's Degree" = "Master's Degree",
+  'Doctorate Degree' = 'Doctorate Degree',
+  'Other' = 'Other',
 }
 
 export enum REQUESTUSER{

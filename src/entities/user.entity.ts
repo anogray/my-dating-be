@@ -49,7 +49,7 @@ export class User {
   @Column({ type: 'varchar', nullable: true })
   education_level: string;
 
-  @Column({ type: 'varchar', default: DatingGoal.STILL_FIGURING_OUT })
+  @Column({ type: 'varchar', nullable: true })
   dating_goal: string;
 
   @Column('text', { array: true })
