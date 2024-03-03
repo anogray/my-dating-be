@@ -53,7 +53,7 @@ export class UserService {
         const getUserE = JSON.parse(
           await this.redisService.getex(`register_${getOtp}`),
         );
-        return 'Please check your email and verify the otp';
+        return `Please check your email and verify the otp ` ;
       }
     } catch (err) {
       console.log('errr', err);
