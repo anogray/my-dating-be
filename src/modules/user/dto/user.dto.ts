@@ -1,12 +1,10 @@
-import { Transform } from 'class-transformer';
-import { IsNotEmpty, IsEmail, IsDateString, IsString, IsEnum, IsNumber, IsOptional, IsArray } from 'class-validator';
-import { EducationLevel, DatingGoal, Interests, Languages, Gender, REQUESTUSER } from 'src/common/enums/user.enum';
+import { Transform, Type } from 'class-transformer';
+import { IsNotEmpty, IsEmail, IsDateString, IsString, IsEnum, IsNumber, IsOptional, IsArray, ValidateNested } from 'class-validator';
+import { EducationLevel, DatingGoal, Interests, Languages, Gender, REQUESTUSER, LikeRejectUser } from 'src/common/enums/user.enum';
+import { ArrayContains } from 'typeorm';
 
-export class CreateUserDto {
-    @IsNotEmpty()
-    @IsString()
-    username: string;
 
+class EmailPasswordDto {
     @IsNotEmpty()
     @IsEmail()
     email: string;
@@ -14,44 +12,65 @@ export class CreateUserDto {
     @IsNotEmpty()
     @IsString()
     password: string;
+}
 
-    @IsNotEmpty()
-    @IsDateString()
-    dateOfBirth: string;
+export class CreateUserDto {
+    // @IsOptional()
+    // @IsString()
+    // username?: string;
 
-    @IsNotEmpty()
-    @IsEnum(Gender)
-    gender: Gender;
+    // @IsNotEmpty()
+    // @IsEmail()
+    // email: string;
 
-    @IsNotEmpty()
-    @IsString()
-    location: string;
+    // @IsNotEmpty()
+    // @IsString()
+    // password: string;
 
-    @IsString()
-    profilePicture: string;
+    @ValidateNested()
+    @Type(() => EmailPasswordDto)
+    emailPassword: EmailPasswordDto;
 
-    @IsString()
-    bio: string;
 
-    @IsNotEmpty()
-    @IsEnum(EducationLevel)
-    education_level: EducationLevel;
-
-    @IsNotEmpty()
-    @IsEnum(DatingGoal)
-    dating_goal: DatingGoal;
-
-    @IsNotEmpty()
-    @IsEnum(Interests, { each: true })
-    interests: Interests[];
-
-    @IsNotEmpty()
-    @IsEnum(Languages, { each: true })
-    languages: Languages[];
-
-    @IsNotEmpty()
+    @IsOptional()
     @IsNumber()
-    height: number;
+    otp?:number
+
+    // @IsOptional()
+    // @IsString()
+    // yob?: number;
+
+    // @IsOptional()
+    // @IsEnum(Gender)
+    // gender?: Gender;
+
+    // @IsOptional()
+    // @IsString()
+    // location?: string;
+
+    // @IsOptional()
+    // @IsString()
+    // bio?: string;
+
+    // @IsOptional()
+    // @IsEnum(EducationLevel)
+    // education_level: EducationLevel;
+
+    // @IsOptional()
+    // @IsEnum(DatingGoal)
+    // dating_goal: DatingGoal;
+
+    // @IsOptional()
+    // @IsEnum(Interests, { each: true })
+    // interests: Interests[];
+
+    // @IsOptional()
+    // @IsEnum(Languages, { each: true })
+    // languages: Languages[];
+
+    // @IsOptional()
+    // @IsNumber()
+    // height: number;
 }
 
 export class UpdateUserDto {
@@ -61,8 +80,7 @@ export class UpdateUserDto {
 
     @IsOptional()
     @IsString()
-    
-    age?: number;
+    yob?: number;
 
     @IsOptional()
     @IsEnum(Gender)
@@ -155,6 +173,17 @@ export class SeenUserDto {
     @IsOptional()
     @IsEnum(REQUESTUSER)
     status?:REQUESTUSER
+}
+
+
+export class LikeRejectUserDto {
+
+    @IsString()
+    userId: string;
+
+    @IsOptional()
+    @IsEnum(LikeRejectUser)
+    status:LikeRejectUser
 }
 
 export class ReceviedUsersDto {

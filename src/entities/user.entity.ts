@@ -13,8 +13,8 @@ export class User {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ unique: true })
-  username: string;
+  // @Column({ unique: true })
+  // username: string;
 
   @Column({ unique: true })
   email: string;
@@ -25,16 +25,16 @@ export class User {
   @OneToMany(() => SeenUser, (seenUser) => seenUser.user)
   seenUsers: SeenUser[];
 
-  @Column({ name: 'date_of_birth', type: 'date' })
-  dateOfBirth: Date;
+  @Column({nullable:true})
+  yob: number;
 
   @Column({ nullable: true })
   age: number;
 
-  @Column({ type: 'enum', enum: Gender })
+  @Column({ type: 'enum', enum: Gender, nullable:true })
   gender: Gender;
 
-  @Column()
+  @Column({nullable:true})
   location: string;
 
   @Column({ name: 'profile_picture', nullable: true })
@@ -52,10 +52,10 @@ export class User {
   @Column({ type: 'varchar', nullable: true })
   dating_goal: string;
 
-  @Column('text', { array: true })
+  @Column('text', { array: true, default:[] })
   interests: string[];
 
-  @Column('text', { array: true })
+  @Column('text', { array: true, default:[] })
   languages: string[];
 
   @Column({ nullable: true })

@@ -18,6 +18,11 @@ export class SeenUser {
   @ManyToOne(() => User, user => user.seenUsers)
   user: User;
   
+
+  @ManyToOne(() => User)
+  @JoinColumn({ name: 'userId' })
+  userA: User;
+
   @Column()
   userId: string;
 

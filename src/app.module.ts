@@ -6,11 +6,13 @@ import { UserModule } from './modules/user/user.module';
 import { PostgresModule } from './config/database/postgres.module';
 import { ConfigModule } from '@nestjs/config';
 import { AuthModule } from './modules/auth/auth.module';
+// import { MailModule } from './modules/email/email.module';
 
 @Module({
   imports: [
     PostgresModule,
     UserModule,
+    // MailModule,
     RedisModule.forRootAsync({
       useFactory: () => ({
         type: 'single',

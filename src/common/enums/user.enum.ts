@@ -61,11 +61,19 @@ export enum EducationLevel {
 }
 
 export enum REQUESTUSER{
-  MATCHED='MATCHED',
-  REJECTED='REJECTED',
   REQUESTED='REQUESTED',
+  LIKED='LIKED',
+  MATCHED='MATCHED',
+  UMMATCHED='UMMATCHED',
+  REJECTED='REJECTED',
   BLOCKED='BLOCKED'
 }
+
+export enum LikeRejectUser{
+  REQUESTED='REQUESTED',
+  LIKED='LIKED',
+}
+
 
 export enum userImages{
   'image/png',

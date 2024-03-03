@@ -7,6 +7,7 @@ import { DeepPartial, QueryFailedError, Repository } from 'typeorm';
 import {
   CreateUserDto,
   FilterUsersDto,
+  LikeRejectUserDto,
   ReceviedUsersDto,
   UpdateUserDto,
 } from './dto/user.dto';
@@ -15,7 +16,8 @@ import { SeenUser } from 'src/entities/seen_user.entity';
 import { SeenUserDto } from './dto/user.dto';
 import { ErrorMessage } from 'src/common/constants';
 import { FileUploadService } from 'src/external/cloudinary.external';
-import { REQUESTUSER } from 'src/common/enums/user.enum';
+import { LikeRejectUser, REQUESTUSER } from 'src/common/enums/user.enum';
+import { EmailService } from '../../external/email.service';
 
 @Injectable()
 export class UserService {
@@ -27,27 +29,32 @@ export class UserService {
     @InjectRedis() private readonly redisService: Redis,
     private readonly configService: ConfigService,
     private fileUploadService: FileUploadService,
+    private emailService: EmailService,
   ) {}
 
   async createUser(createUserDto: CreateUserDto) {
     try {
-      const partialUser: DeepPartial<User> = {
-        username: createUserDto.username,
-        email: createUserDto.email,
-        password: createUserDto.password,
-        dateOfBirth: createUserDto.dateOfBirth,
-        gender: createUserDto.gender,
-        location: createUserDto.location,
-        profilePicture: createUserDto.profilePicture,
-        bio: createUserDto.bio,
-        education_level: createUserDto.education_level,
-        dating_goal: createUserDto.dating_goal,
-        interests: createUserDto.interests,
-        languages: createUserDto.languages,
-        height: createUserDto.height,
-      };
-      const newUser = this.userRepository.create(createUserDto);
-      return await this.userRepository.save(newUser);
+      const getUser = JSON.parse(
+        await this.redisService.getex(`register_${createUserDto['otp']}`),
+      );
+      const email = createUserDto['otp'] ? getUser.email : createUserDto['email'];
+      const password = createUserDto['otp'] ? getUser.password : createUserDto['password'];
+
+      if (getUser && createUserDto.otp === getUser.otp) {
+        const partialUser: DeepPartial<User> = {
+          email:getUser.email,
+          password:getUser.password,
+        };
+        const newUser = this.userRepository.create(partialUser);
+        return await this.userRepository.save(newUser);
+      } else {
+        const getOtp = await this.emailService.sendEmail('bbncr97@gmail.com');
+        await this.redisService.setex(`register_${getOtp}`,120,JSON.stringify({ email:email,password:password, otp: getOtp }));
+        const getUserE = JSON.parse(
+          await this.redisService.getex(`register_${getOtp}`),
+        );
+        return 'Please check your email and verify the otp';
+      }
     } catch (err) {
       console.log('errr', err);
       throw err;
@@ -73,7 +80,7 @@ export class UserService {
       if (!user) {
         throw ErrorMessage.userError.userNotFound;
       }
-      if(user.images?.length>5){
+      if (user.images?.length > 5) {
         throw ErrorMessage.userError.numberImagesLimit;
       }
       let responseUploadedUrls = null;
@@ -86,7 +93,9 @@ export class UserService {
       const updatedUserData: DeepPartial<User> = { ...updateDto };
 
       if (responseUploadedUrls && responseUploadedUrls.length > 0) {
-        updatedUserData.images = user.images ? [...user.images, ...responseUploadedUrls] : responseUploadedUrls;
+        updatedUserData.images = user.images
+          ? [...user.images, ...responseUploadedUrls]
+          : responseUploadedUrls;
       }
       console.log('respneUrl', responseUploadedUrls, updatedUserData);
 
@@ -106,29 +115,27 @@ export class UserService {
     }
   }
 
-  async removeProfileImage(userId:string,image_url:string){
-    try{
-      if(!image_url){
+  async removeProfileImage(userId: string, image_url: string) {
+    try {
+      if (!image_url) {
         throw ErrorMessage.userError.removeProfileImageInvalid;
       }
 
       const result = await this.userRepository
-      .createQueryBuilder()
-      .update(User)
-      .set({ images: () => `array_remove(images, '${image_url}')` })
-      .where("id = :userId", { userId })
-      .andWhere(`'${image_url}' = ANY(images)`)
-      .execute();
+        .createQueryBuilder()
+        .update(User)
+        .set({ images: () => `array_remove(images, '${image_url}')` })
+        .where('id = :userId', { userId })
+        .andWhere(`'${image_url}' = ANY(images)`)
+        .execute();
 
-    if (result.affected === 0) {
-      throw ErrorMessage.userError.imagenotFound;
-    }
-
-    }catch(err){
+      if (result.affected === 0) {
+        throw ErrorMessage.userError.imagenotFound;
+      }
+    } catch (err) {
       throw err;
     }
   }
-
 
   async getUsers(userId: string) {
     try {
@@ -143,7 +150,7 @@ export class UserService {
 
   async findByUsernameOrEmail(usernameOrEmail: string): Promise<User> {
     return this.userRepository.findOne({
-      where: [{ username: usernameOrEmail }, { email: usernameOrEmail }],
+      where: [{ email: usernameOrEmail }],
     });
   }
 
@@ -161,7 +168,7 @@ export class UserService {
     try {
       const seenUsersKey = `user:${userId}:actionUsers`;
 
-      const radius = 900;
+      const radius = 90000000;
 
       let seenUserIds: any = await this.redisService.smembers(seenUsersKey);
       if (!seenUserIds.length) {
@@ -181,14 +188,17 @@ export class UserService {
       // const getSeenRequestUser = await this.seenUser.findOne({where:{status:REQUESTUSER.REQUESTED},relations: ['seenUser'] , select:['seenUser']})
 
       const getSeenRequestUser = await this.seenUser.findOne({
-        where: { status: REQUESTUSER.REQUESTED },
-        relations: ['seenUser'],
-        select: ['seenUser'],
+        where: { status: REQUESTUSER.LIKED, seen_user_id: userId },
+        relations: ['userA'],
+        select: ['userA'],
       });
 
       if (getSeenRequestUser) {
         limit = 19;
+        seenUserIds = [...seenUserIds, getSeenRequestUser.userA.id];
       }
+
+      console.log({ getSeenRequestUser });
 
       const { longitude, latitude } = await this.userRepository
         .createQueryBuilder('user')
@@ -199,7 +209,9 @@ export class UserService {
 
       const query = this.userRepository.createQueryBuilder('user');
 
-      query.where('user.id != :userId', { userId });
+      query
+        .where('user.id != :userId', { userId })
+        .andWhere('user.yob IS NOT NULL');
 
       console.log({ filter });
       if (filter.minAge) {
@@ -252,7 +264,7 @@ export class UserService {
         .addSelect('user.id', 'id')
         .addSelect('user.username', 'username')
         .addSelect('user.email', 'email')
-        .addSelect('user.dateOfBirth', 'dateOfBirth')
+        .addSelect('user.yob', 'yob')
         .addSelect('user.gender', 'gender')
         .addSelect('user.location', 'location')
         .addSelect('user.profilePicture', 'profilePicture')
@@ -273,7 +285,7 @@ export class UserService {
         const randomIndex = Math.floor(
           Math.random() * (getFilterdUsers.length + 1),
         );
-        getFilterdUsers.splice(randomIndex, 0, getSeenRequestUser.seenUser);
+        getFilterdUsers.splice(randomIndex, 0, getSeenRequestUser.userA);
       }
 
       // const usersRandomized = MathgetFilterdUsers.length
@@ -284,7 +296,55 @@ export class UserService {
     }
   }
 
-  async actionUser(userId: string, seenUserDto: SeenUserDto) {
+  // async actionUser(userId: string, seenUserDto: SeenUserDto) {
+  async actionUser(userId: string, seenUserDto: LikeRejectUserDto) {
+    try {
+      const userAction = await this.seenUser.findOne({
+        where: [
+          {
+            userId: seenUserDto.userId,
+            seen_user_id: userId,
+            status: REQUESTUSER.LIKED,
+          },
+        ],
+      });
+      console.log('actionTrigger', userAction);
+
+      //update as matched
+      if (userAction) {
+        //update user request if already exists then match
+        const seenUsersKey = `user:${userId}:actionUsers`;
+        await this.redisService.sadd(seenUsersKey, seenUserDto.userId);
+
+        const updateRequest = await this.seenUser.update(
+          { id: userAction.id },
+          {
+            status: 'MACTHED',
+          },
+        );
+        //update user request if already exists then create that user also
+        await this.seenUser.save({
+          userId,
+          seen_user_id: seenUserDto.userId,
+          status: 'MACTHED',
+        });
+
+        //initiate the chat seesion userid and seen_user_id
+      } else {
+        const seenUsersKey = `user:${userId}:actionUsers`;
+        await this.redisService.sadd(seenUsersKey, seenUserDto.userId);
+        await this.seenUser.save({ userId, ...seenUserDto });
+      }
+    } catch (error) {
+      if (error?.code === '23505') {
+        throw ErrorMessage.userError.duplicateRequest;
+      }
+      console.log('actionUser errrror', error);
+      throw error;
+    }
+  }
+
+  async likeUser(userId: string, seenUserDto: SeenUserDto) {
     try {
       const seenUsersKey = `user:${userId}:actionUsers`;
       await this.redisService.sadd(seenUsersKey, seenUserDto.seen_user_id);
@@ -318,11 +378,12 @@ export class UserService {
         .createQueryBuilder('seen_user')
         .where('seen_user."userId" IS NOT NULL')
         .andWhere('seen_user."userId" = :userId', { userId })
+        .andWhere('seen_user.status=:status', { status: 'LIKED' })
         .select([
           'user.id as id',
           'user.username as username',
           'user.email as email',
-          'user.dateOfBirth as dateOfBirth',
+          'user.yob as yob',
           'user.gender as gender',
           'user.location as location',
           'user.profilePicture as profilePicture',

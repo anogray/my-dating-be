@@ -15,6 +15,7 @@ import { UserService } from './user.service';
 import {
   CreateUserDto,
   FilterUsersDto,
+  LikeRejectUserDto,
   ReceviedUsersDto,
   RemoveImageDto,
   SeenUserDto,
@@ -74,7 +75,7 @@ export class UserController {
   @UseGuards(AuthGuard)
   async actionUser(
     @UserDecorator() user: any,
-    @Body() seenUserDto: SeenUserDto,
+    @Body() seenUserDto: LikeRejectUserDto,
   ) {
     return this.userService.actionUser(user.id, seenUserDto);
   }
@@ -107,4 +108,6 @@ export class UserController {
     console.log({ user, filter });
     return await this.userService.receivedUsers(user.id, filter);
   }
+
+  
 }

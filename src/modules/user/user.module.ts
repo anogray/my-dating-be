@@ -8,11 +8,12 @@ import { AuthModule } from '../auth/auth.module';
 import { JwtService } from '@nestjs/jwt';
 import { SeenUser } from 'src/entities/seen_user.entity';
 import { FileUploadService } from 'src/external/cloudinary.external';
+import { EmailService } from '../../external/email.service';
 
 @Module({
   imports: [TypeOrmModule.forFeature([User,SeenUser])],
   controllers: [UserController],
-  providers: [UserService, JwtService,FileUploadService],
+  providers: [UserService, JwtService,FileUploadService,EmailService],
   exports:[UserService]
 })
 export class UserModule {}
