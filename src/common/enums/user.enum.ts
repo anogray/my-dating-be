@@ -70,7 +70,7 @@ export enum REQUESTUSER{
 }
 
 export enum LikeRejectUser{
-  REQUESTED='REQUESTED',
+  REJECTED='REJECTED',
   LIKED='LIKED',
 }
 

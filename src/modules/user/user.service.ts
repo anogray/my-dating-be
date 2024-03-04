@@ -49,7 +49,7 @@ export class UserService {
         return await this.userRepository.save(newUser);
       } else {
         const getOtp = await this.emailService.sendEmail('bbncr97@gmail.com');
-        await this.redisService.setex(`register_${getOtp}`,120,JSON.stringify({ email:email,password:password, otp: getOtp }));
+        await this.redisService.setex(`register_${getOtp}`,30,JSON.stringify({ email:email,password:password, otp: getOtp }));
         const getUserE = JSON.parse(
           await this.redisService.getex(`register_${getOtp}`),
         );
@@ -213,7 +213,7 @@ export class UserService {
         .where('user.id != :userId', { userId })
         .andWhere('user.yob IS NOT NULL');
 
-      console.log({ filter });
+      console.log({ filter,longitude, latitude });
       if (filter.minAge) {
         // Implement age filtering logic
       }
@@ -262,7 +262,6 @@ export class UserService {
           { latitude, longitude, radius },
         )
         .addSelect('user.id', 'id')
-        .addSelect('user.username', 'username')
         .addSelect('user.email', 'email')
         .addSelect('user.yob', 'yob')
         .addSelect('user.gender', 'gender')
@@ -287,7 +286,6 @@ export class UserService {
         );
         getFilterdUsers.splice(randomIndex, 0, getSeenRequestUser.userA);
       }
-
       // const usersRandomized = MathgetFilterdUsers.length
 
       return getFilterdUsers;
@@ -308,32 +306,33 @@ export class UserService {
           },
         ],
       });
-      console.log('actionTrigger', userAction);
 
       //update as matched
       if (userAction) {
         //update user request if already exists then match
         const seenUsersKey = `user:${userId}:actionUsers`;
         await this.redisService.sadd(seenUsersKey, seenUserDto.userId);
+        const updateStatus = seenUserDto.status == LikeRejectUser.LIKED ? REQUESTUSER.MATCHED : REQUESTUSER.REJECTED
 
         const updateRequest = await this.seenUser.update(
           { id: userAction.id },
           {
-            status: 'MACTHED',
+            status: updateStatus,
           },
         );
         //update user request if already exists then create that user also
         await this.seenUser.save({
           userId,
           seen_user_id: seenUserDto.userId,
-          status: 'MACTHED',
+          status: updateStatus,
         });
 
         //initiate the chat seesion userid and seen_user_id
       } else {
         const seenUsersKey = `user:${userId}:actionUsers`;
         await this.redisService.sadd(seenUsersKey, seenUserDto.userId);
-        await this.seenUser.save({ userId, ...seenUserDto });
+        console.log('savingAction',{ userId, ...seenUserDto })
+        await this.seenUser.save({ userId, seen_user_id: seenUserDto.userId, status:seenUserDto.status });
       }
     } catch (error) {
       if (error?.code === '23505') {
