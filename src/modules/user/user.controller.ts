@@ -16,6 +16,7 @@ import {
   CreateUserDto,
   FilterUsersDto,
   LikeRejectUserDto,
+  MessageDto,
   ReceviedUsersDto,
   RemoveImageDto,
   SeenUserDto,
@@ -27,6 +28,7 @@ import { AuthGuard } from 'src/guards/auth.guard';
 import { UserDecorator } from 'src/decorators/user.decorator';
 import { UserMediaImageValidation } from 'src/common/pipes/user.media.validation.pipe';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
+import { ErrorMessage } from 'src/common/constants';
 
 @Controller('users')
 export class UserController {
@@ -107,6 +109,26 @@ export class UserController {
   ) {
     console.log({ user, filter });
     return await this.userService.receivedUsers(user.id, filter);
+  }
+
+  @Post('chat/send')
+  @UseGuards(AuthGuard)
+  async postMessage(@UserDecorator() user: any,@Body() body:MessageDto){
+    return await this.userService.postMessage({...body,senderId:String(user.id)});
+  }
+  
+  @Get('chat/:id')
+  @UseGuards(AuthGuard)
+  async userChat(@UserDecorator() user: any,@Param('id') id:string, @Query('page') page: string = '1', @Query('limit') limit: string = '100'){
+
+    const pageNumber = parseInt(page, 10);
+    const messageLimit = parseInt(limit, 10);
+
+    if (!id || pageNumber < 1 || messageLimit < 1) {
+      throw ErrorMessage.userError.userChatInvalidRequest;
+
+    }  
+    return await this.userService.userChat(user.id,id,pageNumber,messageLimit);
   }
 
   

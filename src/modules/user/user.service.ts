@@ -8,6 +8,7 @@ import {
   CreateUserDto,
   FilterUsersDto,
   LikeRejectUserDto,
+  MessageDto,
   ReceviedUsersDto,
   UpdateUserDto,
 } from './dto/user.dto';
@@ -18,6 +19,7 @@ import { ErrorMessage } from 'src/common/constants';
 import { FileUploadService } from 'src/external/cloudinary.external';
 import { LikeRejectUser, REQUESTUSER } from 'src/common/enums/user.enum';
 import { EmailService } from '../../external/email.service';
+import { Message } from 'src/entities/message.entity';
 
 @Injectable()
 export class UserService {
@@ -26,6 +28,8 @@ export class UserService {
     private userRepository: Repository<User>,
     @InjectRepository(SeenUser)
     private seenUser: Repository<SeenUser>,
+    @InjectRepository(Message)
+    private messageRepository: Repository<Message>,
     @InjectRedis() private readonly redisService: Redis,
     private readonly configService: ConfigService,
     private fileUploadService: FileUploadService,
@@ -37,23 +41,31 @@ export class UserService {
       const getUser = JSON.parse(
         await this.redisService.getex(`register_${createUserDto['otp']}`),
       );
-      const email = createUserDto['otp'] ? getUser.email : createUserDto['email'];
-      const password = createUserDto['otp'] ? getUser.password : createUserDto['password'];
+      const email = createUserDto['otp']
+        ? getUser.email
+        : createUserDto['email'];
+      const password = createUserDto['otp']
+        ? getUser.password
+        : createUserDto['password'];
 
       if (getUser && createUserDto.otp === getUser.otp) {
         const partialUser: DeepPartial<User> = {
-          email:getUser.email,
-          password:getUser.password,
+          email: getUser.email,
+          password: getUser.password,
         };
         const newUser = this.userRepository.create(partialUser);
         return await this.userRepository.save(newUser);
       } else {
         const getOtp = await this.emailService.sendEmail('bbncr97@gmail.com');
-        await this.redisService.setex(`register_${getOtp}`,30,JSON.stringify({ email:email,password:password, otp: getOtp }));
+        await this.redisService.setex(
+          `register_${getOtp}`,
+          30,
+          JSON.stringify({ email: email, password: password, otp: getOtp }),
+        );
         const getUserE = JSON.parse(
           await this.redisService.getex(`register_${getOtp}`),
         );
-        return `Please check your email and verify the otp ` ;
+        return `Please check your email and verify the otp `;
       }
     } catch (err) {
       console.log('errr', err);
@@ -213,7 +225,7 @@ export class UserService {
         .where('user.id != :userId', { userId })
         .andWhere('user.yob IS NOT NULL');
 
-      console.log({ filter,longitude, latitude });
+      console.log({ filter, longitude, latitude });
       if (filter.minAge) {
         // Implement age filtering logic
       }
@@ -312,7 +324,10 @@ export class UserService {
         //update user request if already exists then match
         const seenUsersKey = `user:${userId}:actionUsers`;
         await this.redisService.sadd(seenUsersKey, seenUserDto.userId);
-        const updateStatus = seenUserDto.status == LikeRejectUser.LIKED ? REQUESTUSER.MATCHED : REQUESTUSER.REJECTED
+        const updateStatus =
+          seenUserDto.status == LikeRejectUser.LIKED
+            ? REQUESTUSER.MATCHED
+            : REQUESTUSER.REJECTED;
 
         const updateRequest = await this.seenUser.update(
           { id: userAction.id },
@@ -331,8 +346,12 @@ export class UserService {
       } else {
         const seenUsersKey = `user:${userId}:actionUsers`;
         await this.redisService.sadd(seenUsersKey, seenUserDto.userId);
-        console.log('savingAction',{ userId, ...seenUserDto })
-        await this.seenUser.save({ userId, seen_user_id: seenUserDto.userId, status:seenUserDto.status });
+        console.log('savingAction', { userId, ...seenUserDto });
+        await this.seenUser.save({
+          userId,
+          seen_user_id: seenUserDto.userId,
+          status: seenUserDto.status,
+        });
       }
     } catch (error) {
       if (error?.code === '23505') {
@@ -439,6 +458,45 @@ export class UserService {
     } catch (error) {
       console.log('receivedUsers Error', error);
       throw error;
+    }
+  }
+
+  async postMessage(body: MessageDto) {
+    try {
+      // const newMessage = new Message();
+      // newMessage.senderId = userId;
+      // newMessage.recipientId = body.userId;
+      // newMessage.content = body.content;
+      console.log('postMessage', body);
+      await this.messageRepository.save(body);
+      return true;
+    } catch (err) {
+      console.log('postMessage', err);
+      throw err;
+    }
+  }
+
+  async userChat(
+    senderId: string,
+    recipientId: string,
+    page: number,
+    limit: number,
+  ) {
+    try {
+
+      const messages = await this.messageRepository.find({
+        where: [
+          { senderId: senderId, recipientId: recipientId }, // User 1 sent to User 2
+          { senderId: recipientId, recipientId: senderId }, // User 2 sent to User 1
+        ],
+        order: { createdDate: 'DESC' },
+        skip: (page - 1) * limit,
+        take: limit,
+      });
+      return messages;
+    } catch (err) {
+      console.log('userChat', err);
+      throw err;
     }
   }
 }

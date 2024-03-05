@@ -190,3 +190,18 @@ export class ReceviedUsersDto {
     @IsEnum(REQUESTUSER)
     status:REQUESTUSER
 }
+
+export class MessageDto {
+
+    @IsOptional()
+    @IsString()
+    senderId?:string;
+
+    @IsNotEmpty()
+    @IsString()
+    recipientId: string;
+
+    @IsNotEmpty()
+    @IsString()
+    content: string;
+}

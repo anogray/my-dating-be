@@ -49,7 +49,8 @@ export class ErrorMessage {
       removeProfileImageInvalid:this.errorMessage('Oops! Something went wrong',400,-99996),
       imagenotFound:this.errorMessage('Image does not exists',400,-99995),
       numberImagesLimit:this.errorMessage('Please remove some images',400,-99994),
-      userNotFound:this.errorMessage('Not Found',400,-99993)
+      userNotFound:this.errorMessage('Not Found',400,-99993),
+      userChatInvalidRequest:this.errorMessage('Invalid request',400,-99992),
     };//-99999 to =89999
 
   }
