@@ -468,8 +468,7 @@ export class UserService {
       // newMessage.recipientId = body.userId;
       // newMessage.content = body.content;
       console.log('postMessage', body);
-      await this.messageRepository.save(body);
-      return true;
+      return await this.messageRepository.save(body);
     } catch (err) {
       console.log('postMessage', err);
       throw err;
@@ -496,6 +495,46 @@ export class UserService {
       return messages;
     } catch (err) {
       console.log('userChat', err);
+      throw err;
+    }
+  }
+
+  async allChats(userId:string, limit:number=20, page: number=1){
+    try{
+
+      const qb = this.seenUser
+      .createQueryBuilder('seen_user')
+      .where('seen_user."userId" = :userId', { userId:Number(userId) })
+      .andWhere('seen_user.status = :status', { status: REQUESTUSER.MATCHED }) // Assuming 'like' indicates a match
+      .leftJoin('seen_user.seenUser', 'user')
+      .addSelect('user.id', 'id')
+      .addSelect('user.name', 'name')
+      .addSelect('user.yob', 'yob')
+      .addSelect('user.gender', 'gender')
+      .addSelect('user.location', 'location')
+      .addSelect('user.images', 'images')
+      .addSelect('user.bio', 'bio')
+      .addSelect('user.education_level', 'education_level')
+      .addSelect('user.dating_goal', 'dating_goal')
+      .addSelect('user.interests', 'interests')
+      .addSelect('user.languages', 'languages')
+      .addSelect('user.height', 'height')
+      .addSelect('user.latitude', 'latitude')
+      .addSelect('user.longitude', 'longitude')
+      .orderBy('seen_user.createdDate', 'DESC'); 
+
+    const totalUsers = await qb.getCount(); // Get total matched users
+    const totalPages = Math.ceil(totalUsers / limit); // Calculate total pages
+    
+    qb.skip((page - 1) * limit)
+      .take(limit);
+
+    
+    const matchedUsers = await qb.getRawMany();
+    console.log({matchedUsers})
+    return {users:matchedUsers.map((matchedUser) => matchedUser),totalPages, limit, page}
+    }catch(err){
+      console.log("allChats err",err);
       throw err;
     }
   }

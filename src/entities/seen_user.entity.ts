@@ -18,7 +18,6 @@ export class SeenUser {
   @ManyToOne(() => User, user => user.seenUsers)
   user: User;
   
-
   @ManyToOne(() => User)
   @JoinColumn({ name: 'userId' })
   userA: User;
@@ -35,6 +34,9 @@ export class SeenUser {
 
   @Column({nullable:true})
   status: string;
+
+  @Column({nullable:true})
+  roomId:string;
   
   @CreateDateColumn({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   createdDate: Date;

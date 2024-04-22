@@ -1,29 +1,19 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, BaseEntity, CreateDateColumn } from 'typeorm';
-import { User } from './User.entity';
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn } from 'typeorm';
 
 @Entity('messages')
-export class Message  {
-  @PrimaryGeneratedColumn()
-  id: number;
+export class Message {
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
 
   @Column({ nullable: false })
   senderId: string;
 
-//   @ManyToOne(() => User, (user) => user.sentMessages)
-//   @JoinColumn({ name: 'senderId' })
-//   sender: User;
-
   @Column({ nullable: false })
   recipientId: string;
-
-//   @ManyToOne(() => User, (user) => user.receivedMessages)
-//   @JoinColumn({ name: 'recipientId' })
-//   recipient: User;
 
   @Column({ type: 'text', nullable: false })
   content: string;
 
   @CreateDateColumn({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   createdDate: Date;
-
 }

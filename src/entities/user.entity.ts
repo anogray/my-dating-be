@@ -25,6 +25,10 @@ export class User {
   @OneToMany(() => SeenUser, (seenUser) => seenUser.user)
   seenUsers: SeenUser[];
 
+  
+  @Column({type:'varchar', nullable:true})
+  name: string;
+
   @Column({nullable:true})
   yob: number;
 

@@ -47,6 +47,14 @@ export class UserController {
     return this.userService.getUsers(user.id);
   }
 
+  @Get("user/:id")
+  @UseGuards(AuthGuard)
+  async userDetails(@UserDecorator() user: any, @Param("id") id:string) {
+    // return "Get Users";
+    const resp =  await this.userService.getUsers(id);
+    return resp;
+  }
+
   @Post('register')
   // @UseGuards(AuthGuard)
   async createUser(@Body() createUserDto: CreateUserDto) {
@@ -111,6 +119,19 @@ export class UserController {
     return await this.userService.receivedUsers(user.id, filter);
   }
 
+
+  @Get('chats')
+  @UseGuards(AuthGuard)
+  async allChats(@UserDecorator() user: any, @Query('page') page: string = '1', @Query('limit') limit: string = '20'){
+    const pageNumber = parseInt(page, 10);
+    const messageLimit = parseInt(limit, 10);
+    if (pageNumber < 1 || messageLimit < 1) {
+      throw ErrorMessage.userError.userChatInvalidRequest;
+    } 
+    console.log("allChats",user.id,pageNumber,messageLimit)
+    return await this.userService.allChats(user.id,pageNumber,messageLimit);
+  }
+
   @Post('chat/send')
   @UseGuards(AuthGuard)
   async postMessage(@UserDecorator() user: any,@Body() body:MessageDto){
@@ -131,5 +152,4 @@ export class UserController {
     return await this.userService.userChat(user.id,id,pageNumber,messageLimit);
   }
 
-  
 }
