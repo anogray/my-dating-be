@@ -1,5 +1,5 @@
 import * as winston from "winston";
-import { SampleTransport } from "./Sample.transport";
+// import { SampleTransport } from "./Sample.transport";
 import * as dayjs from "dayjs";
 import { bool, config } from "src/config";
 import { IReqCtx } from "../decorators/request-context.decorator";
@@ -122,7 +122,7 @@ export function initializeWinston(): void {
     level: "debug",
     format: combine(timestamp(), myFormat),
     transports: [
-      new SampleTransport(),
+      // new SampleTransport(),
       new winston.transports.Console({
         format: combine(myFormat, colorize({ all: true })),
       }),
