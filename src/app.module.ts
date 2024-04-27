@@ -17,6 +17,7 @@ import { AuthModule } from './modules/auth/auth.module';
       useFactory: () => ({
         type: 'single',
         url: `redis://${process.env.REDIS_HOST}:${process.env.REDIS_PORT}`,
+        options:{password:process.env.REDIS_PASSWORD}
       }),
     }),
     ConfigModule.forRoot({ envFilePath: ['.env'], isGlobal: true }),

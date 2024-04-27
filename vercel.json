@@ -1,26 +1,5 @@
 {
     "version": 2,
-    "env": {
-        "REDIS_HOST": "localhost",
-        "REDIS_PORT": 6379,
-        "JWT_SECRET": "your_secret_key_here",
-        "CLOUDINARY_CLOUD": "doyezmfiw",
-        "CLOUDINARY_API_KEY": "328476417741913",
-        "CLOUDINARY_API_SECRET": "8Jmr4TJDM5C1aYX9fQY6OKNPgK0",
-        "MAILER_PORT": 465,
-        "MAILER_HOST": "smtp.gmail.com",
-        "MAILER_MAIL": "tammytim12@gmail.com",
-        "MAILER_PASS": "pkfencqvogicjvpd",
-        "PGHOST": "ep-orange-cell-a55es4i9.us-east-2.aws.neon.tech",
-        "PGDATABASE": "my_dating",
-        "PGUSER": "my_dating_owner",
-        "PGPASSWORD": "u2nLBvmgV0Ij",
-        "PGPORT": 5432,
-        "DB_USERNAME": "postgres",
-        "DB_PASSWORD": "root",
-        "DB_NAME": "my_dating_test",
-        "DB_PORT": 5432
-    },
     "builds": [
         {
             "src": "dist/main.js",
