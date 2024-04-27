@@ -1,6 +1,7 @@
 import * as winston from "winston";
 // import { SampleTransport } from "./Sample.transport";
-import * as dayjs from "dayjs";
+// import * as dayjs from "dayjs";
+import { default as dayjs } from 'dayjs';
 import { bool, config } from "src/config";
 import { IReqCtx } from "../decorators/request-context.decorator";
 import {Request , Response} from "express"
