@@ -15,11 +15,11 @@ import { User } from "src/entities/user.entity";
                 // username: "postgres",
                 // password: "root",
                 // database: "my_dating_test",
-                database: "my_dating",
-                host: "ep-orange-cell-a55es4i9.us-east-2.aws.neon.tech",
-                port: 5432,
-                username: "my_dating_owner",
-                password: "u2nLBvmgV0Ij",
+                database: process.env.PGDATABASE,
+                host: process.env.PGHOST,
+                port: +process.env.PGPORT,
+                username: process.env.PGUSER,
+                password: process.env.PGPASSWORD,
                 ssl:true,
                 entities: [
                 //  User
