@@ -10,8 +10,11 @@ import { SeenUser } from './seen_user.entity';
 
 @Entity()
 export class User {
-  @PrimaryGeneratedColumn()
-  id: number;
+  // @PrimaryGeneratedColumn()
+  // id: number;
+
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
 
   // @Column({ unique: true })
   // username: string;
@@ -22,8 +25,8 @@ export class User {
   @Column({select:false})
   password: string;
 
-  @OneToMany(() => SeenUser, (seenUser) => seenUser.user)
-  seenUsers: SeenUser[];
+  // @OneToMany(() => SeenUser, (seenUser) => seenUser.user)
+  // seenUsers: SeenUser[];
 
   
   @Column({type:'varchar', nullable:true})

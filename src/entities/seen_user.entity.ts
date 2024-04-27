@@ -10,13 +10,16 @@ import {
 import { User } from './user.entity';
 
 @Entity()
-@Index(['userId', 'seen_user_id'], { unique: true })
+// @Index(['userId', 'seen_user_id'], { unique: true })
 export class SeenUser {
-  @PrimaryGeneratedColumn()
-  id: number;
+  // @PrimaryGeneratedColumn()
+  // id: number;
 
-  @ManyToOne(() => User, user => user.seenUsers)
-  user: User;
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
+
+  // @ManyToOne(() => User, user => user.seenUsers)
+  // user: User;
   
   @ManyToOne(() => User)
   @JoinColumn({ name: 'userId' })
@@ -34,9 +37,6 @@ export class SeenUser {
 
   @Column({nullable:true})
   status: string;
-
-  @Column({nullable:true})
-  roomId:string;
   
   @CreateDateColumn({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   createdDate: Date;

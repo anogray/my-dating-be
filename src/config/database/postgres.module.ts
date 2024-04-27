@@ -10,13 +10,19 @@ import { User } from "src/entities/user.entity";
             // imports: [ConfigModule],
             useFactory: () => ({
                 type: "postgres",
-                host: "localhost",
-                port: 5432,
-                username: "postgres",
-                password: "root",
+                // host: "localhost",
+                // port: 5432,
+                // username: "postgres",
+                // password: "root",
+                // database: "my_dating_test",
                 database: "my_dating",
+                host: "ep-orange-cell-a55es4i9.us-east-2.aws.neon.tech",
+                port: 5432,
+                username: "my_dating_owner",
+                password: "u2nLBvmgV0Ij",
+                ssl:true,
                 entities: [
-                 User
+                //  User
                 ],
                 autoLoadEntities: true,
                 retryAttempts: 3,

@@ -1,5 +1,5 @@
 import { Transform, Type } from 'class-transformer';
-import { IsNotEmpty, IsEmail, IsDateString, IsString, IsEnum, IsNumber, IsOptional, IsArray, ValidateNested } from 'class-validator';
+import { IsNotEmpty, IsEmail, IsDateString, IsString, IsEnum, IsNumber, IsOptional, IsArray, ValidateNested, IsNumberString } from 'class-validator';
 import { EducationLevel, DatingGoal, Interests, Languages, Gender, REQUESTUSER, LikeRejectUser } from 'src/common/enums/user.enum';
 import { ArrayContains } from 'typeorm';
 
@@ -120,8 +120,8 @@ export class UpdateUserDto {
     languages?: Languages[];
 
     @IsOptional()
-    @IsNumber()
-    height?: number;
+    @IsNumberString()
+    height: number;
 
     @IsOptional()
     @Transform(({ value }) => parseFloat(value))

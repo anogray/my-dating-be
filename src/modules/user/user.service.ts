@@ -41,6 +41,7 @@ export class UserService {
       const getUser = JSON.parse(
         await this.redisService.getex(`register_${createUserDto['otp']}`),
       );
+      console.log({createUserDto},getUser)
       const email = createUserDto['otp']
         ? getUser.email
         : createUserDto['email'];
@@ -59,7 +60,7 @@ export class UserService {
         const getOtp = await this.emailService.sendEmail('bbncr97@gmail.com');
         await this.redisService.setex(
           `register_${getOtp}`,
-          30,
+          120,
           JSON.stringify({ email: email, password: password, otp: getOtp }),
         );
         const getUserE = JSON.parse(
@@ -87,7 +88,7 @@ export class UserService {
       }
 
       const user = await this.userRepository.findOne({
-        where: { id: Number(userId) },
+        where: { id: (userId) },
       });
       if (!user) {
         throw ErrorMessage.userError.userNotFound;
@@ -119,7 +120,7 @@ export class UserService {
       await this.userRepository.update(userId, updatedUserData);
 
       return await this.userRepository.findOne({
-        where: { id: Number(userId) },
+        where: { id: (userId) },
       });
     } catch (err) {
       console.error('updateUser error:', err);
@@ -152,7 +153,7 @@ export class UserService {
   async getUsers(userId: string) {
     try {
       return await this.userRepository.findOne({
-        where: { id: Number(userId) },
+        where: { id: (userId) },
       });
     } catch (err) {
       console.log('errr', err);
@@ -309,6 +310,7 @@ export class UserService {
   // async actionUser(userId: string, seenUserDto: SeenUserDto) {
   async actionUser(userId: string, seenUserDto: LikeRejectUserDto) {
     try {
+      console.log("actionUserParams",{userId},seenUserDto)
       const userAction = await this.seenUser.findOne({
         where: [
           {
@@ -318,7 +320,7 @@ export class UserService {
           },
         ],
       });
-
+console.log("userAction",userAction)
       //update as matched
       if (userAction) {
         //update user request if already exists then match
@@ -504,7 +506,7 @@ export class UserService {
 
       const qb = this.seenUser
       .createQueryBuilder('seen_user')
-      .where('seen_user."userId" = :userId', { userId:Number(userId) })
+      .where('seen_user."userId" = :userId', { userId:(userId) })
       .andWhere('seen_user.status = :status', { status: REQUESTUSER.MATCHED }) // Assuming 'like' indicates a match
       .leftJoin('seen_user.seenUser', 'user')
       .addSelect('user.id', 'id')
@@ -524,6 +526,7 @@ export class UserService {
       .orderBy('seen_user.createdDate', 'DESC'); 
 
     const totalUsers = await qb.getCount(); // Get total matched users
+    console.log({totalUsers},qb.getQuery())
     const totalPages = Math.ceil(totalUsers / limit); // Calculate total pages
     
     qb.skip((page - 1) * limit)
