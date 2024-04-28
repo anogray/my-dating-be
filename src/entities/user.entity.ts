@@ -4,7 +4,7 @@ import {
   Gender,
   Interests,
   Languages,
-} from 'src/common/enums/user.enum';
+} from '../../src/common/enums/user.enum';
 import { Entity, Column, PrimaryGeneratedColumn, OneToMany, NumericType } from 'typeorm';
 import { SeenUser } from './seen_user.entity';
 
